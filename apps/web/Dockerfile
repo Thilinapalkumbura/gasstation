@@ -21,6 +21,9 @@ RUN npm ci
 COPY apps/web ./apps/web
 COPY packages/shared-types ./packages/shared-types
 
+# Compile shared-types to JS
+RUN npm run build --workspace=packages/shared-types
+
 # Build args passed at build time (NEXT_PUBLIC_ vars must be available during build)
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL

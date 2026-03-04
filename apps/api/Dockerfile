@@ -20,6 +20,9 @@ RUN npm ci
 COPY apps/api ./apps/api
 COPY packages ./packages
 
+# Compile shared-types to JS
+RUN npm run build --workspace=packages/shared-types
+
 # Generate Prisma client
 RUN cd packages/database && npx prisma generate
 
