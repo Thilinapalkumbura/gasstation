@@ -50,6 +50,7 @@ COPY --from=builder /app/node_modules ./node_modules
 # Copy generated Prisma client (output path from schema.prisma)
 COPY --from=builder /app/packages/database/src/generated ./packages/database/src/generated
 COPY --from=builder /app/packages/database/package.json ./packages/database/package.json
+COPY --from=builder /app/packages/database/prisma ./packages/database/prisma
 
 # Copy shared-types if it has compiled output
 COPY --from=builder /app/packages/shared-types ./packages/shared-types
