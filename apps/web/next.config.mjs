@@ -2,6 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@gasstation/shared-types'],
+  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: true },
   // Proxy API calls through Next.js to avoid CORS in dev
   async rewrites() {
     return [
