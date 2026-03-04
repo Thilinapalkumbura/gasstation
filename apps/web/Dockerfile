@@ -9,7 +9,9 @@ WORKDIR /app
 
 # Copy workspace manifests
 COPY package.json package-lock.json turbo.json ./
+COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
+COPY packages/database/package.json ./packages/database/
 COPY packages/shared-types/package.json ./packages/shared-types/
 
 # Install dependencies

@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  transpilePackages: ['@gasstation/shared-types'],
   // Proxy API calls through Next.js to avoid CORS in dev
   async rewrites() {
     return [
