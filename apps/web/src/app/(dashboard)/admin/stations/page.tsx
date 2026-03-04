@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api/client';
 
@@ -163,6 +164,7 @@ function StationModal({
 
 export default function AdminStationsPage() {
   const qc = useQueryClient();
+  const router = useRouter();
   const [showCreate, setShowCreate] = useState(false);
   const [editStation, setEditStation] = useState<Station | null>(null);
 
@@ -209,12 +211,20 @@ export default function AdminStationsPage() {
                         </div>
                       )}
                     </div>
-                    <button
-                      onClick={() => setEditStation(station)}
-                      className="shrink-0 text-xs text-blue-600 hover:text-blue-800 font-medium py-1"
-                    >
-                      Edit
-                    </button>
+                    <div className="flex gap-2 shrink-0">
+                      <button
+                        onClick={() => router.push(`/admin/stations/${station.id}`)}
+                        className="text-xs text-blue-600 hover:text-blue-800 font-medium py-1"
+                      >
+                        View
+                      </button>
+                      <button
+                        onClick={() => setEditStation(station)}
+                        className="text-xs text-gray-500 hover:text-gray-700 font-medium py-1"
+                      >
+                        Edit
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -245,8 +255,17 @@ export default function AdminStationsPage() {
                             <div className="text-xs text-gray-400">{station.contactEmail}</div>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-right">
-                          <button onClick={() => setEditStation(station)} className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                        <td className="px-4 py-3 text-right flex gap-3 justify-end">
+                          <button
+                            onClick={() => router.push(`/admin/stations/${station.id}`)}
+                            className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                          >
+                            View
+                          </button>
+                          <button
+                            onClick={() => setEditStation(station)}
+                            className="text-xs text-gray-500 hover:text-gray-700 font-medium"
+                          >
                             Edit
                           </button>
                         </td>
