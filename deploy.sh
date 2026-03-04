@@ -27,7 +27,7 @@ if [[ -d "$APP_DIR/.git" ]]; then
   git -C "$APP_DIR" pull
 else
   # Replace with your actual GitHub repo URL
-  git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git "$APP_DIR"
+  git clone https://github.com/Thilinapalkumbura/gasstation.git "$APP_DIR"
 fi
 
 cd "$APP_DIR"
