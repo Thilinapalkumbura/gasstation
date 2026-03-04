@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(cd /Users/thilina/Documents/ecom/gasstation/packages/database && npx ts-node src/seed.ts 2>&1)",
+      "Bash(tail:*)",
+      "Bash(cd /Users/thilina/Documents/ecom/gasstation/packages/database && npx prisma generate 2>&1)",
+      "Bash(npx ts-node:*)",
+      "Bash(docker ps:*)",
+      "Bash(cd /Users/thilina/Documents/ecom/gasstation/apps/api && npm run start:dev 2>&1)",
+      "Bash(cd /Users/thilina/Documents/ecom/gasstation/apps/web && npm run dev 2>&1)",
+      "Bash(cd /Users/thilina/Documents/ecom/gasstation/apps/api && npm run dev 2>&1)",
+      "Bash(cd:*)",
+      "Bash(head:*)",
+      "Bash(node:*)",
+      "Bash(pkill:*)",
+      "Bash(npm run:*)",
+      "Bash(lsof -i :3000 -i :3001)",
+      "Bash(xargs kill -9)",
+      "Bash(kill:*)",
+      "Bash(/usr/bin/head:*)",
+      "Bash(DATABASE_URL=\"postgresql://gasstation:gasstation_dev_2024@localhost:5432/gasstation?schema=public\" npx ts-node:*)"
+    ]
+  }
+}

@@ -1,0 +1,729 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Gasstation — Prisma Schema
+// Database: PostgreSQL
+// Standards: SLFRS / LKAS / Sri Lanka IRD Tax
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  BACK_OFFICE
+  STATION_MANAGER
+  WORKER
+}
+
+enum FuelType {
+  PETROL_92
+  PETROL_95
+  AUTO_DIESEL
+  SUPER_DIESEL
+  KEROSENE
+}
+
+enum ShiftType {
+  MORNING // 06:00 - 14:00
+  EVENING // 14:00 - 22:00
+  NIGHT   // 22:00 - 06:00
+}
+
+enum UsageLogStatus {
+  PENDING   // submitted by worker, awaiting approval
+  APPROVED  // approved by manager — stock movement created
+  REJECTED  // rejected by manager — worker must resubmit
+}
+
+enum StockMovementType {
+  DELIVERY_IN
+  DISPENSED_OUT
+  ADJUSTMENT
+  OPENING_STOCK
+}
+
+enum OrderStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  PARTIALLY_DELIVERED
+  DELIVERED
+  CANCELLED
+}
+
+enum TaxType {
+  VAT          // Value Added Tax (18%)
+  INCOME_TAX   // Corporate / Business Income Tax
+  WHT          // Withholding Tax on supplier payments
+  ESC          // Economic Service Charge
+  PAYE         // Pay As You Earn (employee tax)
+}
+
+enum TaxPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  ANNUAL
+}
+
+enum TransactionCategory {
+  FUEL_SALE
+  FUEL_PURCHASE
+  OPERATING_EXPENSE
+  SALARY
+  TAX_PAYMENT
+  OTHER_INCOME
+  OTHER_EXPENSE
+  VEHICLE_SERVICE_SALE
+  CAR_WASH_SALE
+  SPARE_PARTS_SALE
+  SPARE_PARTS_PURCHASE
+  GAS_CYLINDER_SALE
+  GAS_CYLINDER_PURCHASE
+}
+
+enum VehicleServiceType {
+  OIL_CHANGE
+  TIRE_SERVICE
+  BATTERY_SERVICE
+  BRAKE_SERVICE
+  AC_SERVICE
+  ELECTRICAL
+  GENERAL_REPAIR
+  OTHER
+}
+
+enum CarWashType {
+  BASIC
+  STANDARD
+  PREMIUM
+  INTERIOR
+  FULL_DETAIL
+}
+
+enum CylinderBrand {
+  LAUGFS
+  SHELL
+  OTHER
+}
+
+enum PaymentMethod {
+  CASH
+  CREDIT
+  CARD
+  BANK_TRANSFER
+}
+
+enum ReportType {
+  INCOME_STATEMENT
+  BALANCE_SHEET
+  CASH_FLOW
+  STOCK_VALUATION
+  TAX_SUMMARY
+  VAT_RETURN
+}
+
+// ─── Core Models ──────────────────────────────────────────────────────────────
+
+model Station {
+  id            String   @id @default(cuid())
+  name          String
+  address       String
+  city          String
+  contactNumber String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  users          User[]
+  tanks          Tank[]
+  purchaseOrders PurchaseOrder[]
+  transactions   Transaction[]
+  taxEntries     TaxEntry[]
+  reports        Report[]
+  suppliers      StationSupplier[]
+  serviceJobs    ServiceJob[]
+  carWashJobs    CarWashJob[]
+  spareParts     SparePart[]
+  sparePartSales SparePartSale[]
+  sparePartStockIns SparePartStockIn[]
+  gasCylinders   GasCylinder[]
+  cylinderSales  CylinderSale[]
+  cylinderStockIns CylinderStockIn[]
+
+  @@map("stations")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  fullName     String
+  role         UserRole
+  isActive     Boolean  @default(true)
+  stationId    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  station              Station?         @relation(fields: [stationId], references: [id])
+  refreshTokens        RefreshToken[]
+  dailyUsageLogs       DailyUsageLog[]  @relation("RecordedBy")
+  approvedUsageLogs    DailyUsageLog[]  @relation("ApprovedBy")
+  stockMovements       StockMovement[]
+  createdOrders        PurchaseOrder[]  @relation("CreatedBy")
+  approvedOrders       PurchaseOrder[]  @relation("ApprovedBy")
+  transactions         Transaction[]
+  serviceJobs          ServiceJob[]
+  carWashJobs          CarWashJob[]
+  sparePartSales       SparePartSale[]
+  sparePartStockIns    SparePartStockIn[]
+  cylinderSales        CylinderSale[]
+  cylinderStockIns     CylinderStockIn[]
+
+  @@index([email])
+  @@index([stationId])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ─── Fuel & Tank Models ───────────────────────────────────────────────────────
+
+model Tank {
+  id                 String   @id @default(cuid())
+  stationId          String
+  fuelType           FuelType
+  capacityLitres     Decimal  @db.Decimal(12, 2)
+  currentLevelLitres Decimal  @db.Decimal(12, 2)
+  reorderLevelLitres Decimal  @db.Decimal(12, 2)
+  reorderQtyLitres   Decimal  @db.Decimal(12, 2)
+  lastUpdated        DateTime @default(now())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  station        Station         @relation(fields: [stationId], references: [id])
+  stockMovements StockMovement[]
+  dailyUsageLogs DailyUsageLog[]
+
+  @@unique([stationId, fuelType])
+  @@index([stationId])
+  @@map("tanks")
+}
+
+model StockMovement {
+  id                   String            @id @default(cuid())
+  tankId               String
+  type                 StockMovementType
+  quantityLitres       Decimal           @db.Decimal(12, 2)
+  balanceAfterLitres   Decimal           @db.Decimal(12, 2)
+  unitCostLkr          Decimal?          @db.Decimal(12, 4)  // for FIFO valuation (LKAS 2)
+  reference            String?           // PO number, GRN number, etc.
+  notes                String?
+  createdById          String
+  createdAt            DateTime          @default(now())
+
+  // Relations
+  tank        Tank  @relation(fields: [tankId], references: [id])
+  createdBy   User  @relation(fields: [createdById], references: [id])
+
+  @@index([tankId])
+  @@index([createdAt])
+  @@map("stock_movements")
+}
+
+// ─── Daily Usage Models ───────────────────────────────────────────────────────
+
+model DailyUsageLog {
+  id                   String         @id @default(cuid())
+  tankId               String
+  shiftType            ShiftType
+  date                 DateTime       @db.Date
+  status               UsageLogStatus @default(PENDING)
+  openingMeterReading  Decimal        @db.Decimal(14, 2)
+  closingMeterReading  Decimal        @db.Decimal(14, 2)
+  openingStockLitres   Decimal        @db.Decimal(12, 2)
+  closingStockLitres   Decimal        @db.Decimal(12, 2)
+  dispensedLitres      Decimal        @db.Decimal(12, 2)  // meter-based: closingMeter - openingMeter
+  physicalDispensedLitres Decimal     @db.Decimal(12, 2)  // dip-based: openingStock - closingStock
+  cashSalesLkr         Decimal        @db.Decimal(14, 2)
+  creditSalesLkr       Decimal        @db.Decimal(14, 2)
+  totalSalesLkr        Decimal        @db.Decimal(14, 2)  // cash + credit
+  pricePerLitreLkr     Decimal        @db.Decimal(10, 4)  // fuel price at time of shift
+  varianceLitres       Decimal        @db.Decimal(10, 4)  // dispensedLitres - physicalDispensedLitres
+  isVarianceHigh       Boolean        @default(false)
+  workerNotes          String?
+  rejectionNotes       String?        // set when status = REJECTED
+  recordedById         String
+  approvedById         String?
+  approvedAt           DateTime?
+  stockMovementId      String?        // reference to the DISPENSED_OUT movement created on approval
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  // Relations
+  tank        Tank  @relation(fields: [tankId], references: [id])
+  recordedBy  User  @relation("RecordedBy", fields: [recordedById], references: [id])
+  approvedBy  User? @relation("ApprovedBy", fields: [approvedById], references: [id])
+
+  @@unique([tankId, shiftType, date])
+  @@index([tankId, date])
+  @@index([date])
+  @@index([status])
+  @@map("daily_usage_logs")
+}
+
+// ─── Procurement Models ───────────────────────────────────────────────────────
+
+model Supplier {
+  id            String   @id @default(cuid())
+  name          String
+  registrationNo String? // Business registration number
+  vatRegNo      String?  // VAT registration (for input tax credit)
+  address       String?
+  contactPerson String?
+  contactNumber String?
+  email         String?
+  bankAccount   String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  stationSuppliers StationSupplier[]
+  purchaseOrders   PurchaseOrder[]
+
+  @@map("suppliers")
+}
+
+model StationSupplier {
+  stationId  String
+  supplierId String
+  isPreferred Boolean @default(false)
+  createdAt  DateTime @default(now())
+
+  station  Station  @relation(fields: [stationId], references: [id])
+  supplier Supplier @relation(fields: [supplierId], references: [id])
+
+  @@id([stationId, supplierId])
+  @@map("station_suppliers")
+}
+
+model PurchaseOrder {
+  id                   String      @id @default(cuid())
+  orderNumber          String      @unique  // PO-2024-0001
+  stationId            String
+  supplierId           String
+  status               OrderStatus @default(DRAFT)
+  orderDate            DateTime    @db.Date
+  expectedDeliveryDate DateTime?   @db.Date
+  deliveredAt          DateTime?
+  totalAmountLkr       Decimal     @db.Decimal(14, 2)
+  totalReceivedAmountLkr Decimal?  @db.Decimal(14, 2)  // actual amount from GRNs
+  notes                String?
+  cancellationReason   String?
+  cancelledAt          DateTime?
+  isAutoGenerated      Boolean     @default(false)      // true = triggered by reorder alert
+  createdById          String
+  approvedById         String?
+  approvedAt           DateTime?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  // Relations
+  station    Station             @relation(fields: [stationId], references: [id])
+  supplier   Supplier            @relation(fields: [supplierId], references: [id])
+  createdBy  User                @relation("CreatedBy", fields: [createdById], references: [id])
+  approvedBy User?               @relation("ApprovedBy", fields: [approvedById], references: [id])
+  items      PurchaseOrderItem[]
+  grns       GoodsReceivedNote[]
+
+  @@index([stationId])
+  @@index([status])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id               String   @id @default(cuid())
+  purchaseOrderId  String
+  fuelType         FuelType
+  quantityLitres   Decimal  @db.Decimal(12, 2)
+  pricePerLitreLkr Decimal  @db.Decimal(10, 4)
+  totalAmountLkr   Decimal  @db.Decimal(14, 2)
+
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  @@map("purchase_order_items")
+}
+
+model GoodsReceivedNote {
+  id              String   @id @default(cuid())
+  grnNumber       String   @unique  // GRN-2024-0001
+  purchaseOrderId String
+  receivedAt      DateTime
+  totalAmountLkr  Decimal  @db.Decimal(14, 2)
+  notes           String?
+  createdById     String?
+  createdAt       DateTime @default(now())
+
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  items         GRNItem[]
+
+  @@map("goods_received_notes")
+}
+
+model GRNItem {
+  id                String  @id @default(cuid())
+  grnId             String
+  fuelType          FuelType
+  orderedQtyLitres  Decimal @db.Decimal(12, 2)
+  receivedQtyLitres Decimal @db.Decimal(12, 2)
+  pricePerLitreLkr  Decimal @db.Decimal(10, 4)
+  totalAmountLkr    Decimal @db.Decimal(14, 2)
+  stockMovementId   String?  // reference to the DELIVERY_IN movement created
+
+  grn GoodsReceivedNote @relation(fields: [grnId], references: [id], onDelete: Cascade)
+
+  @@map("grn_items")
+}
+
+// ─── Financial Models (SLFRS / LKAS compliant) ───────────────────────────────
+
+model Transaction {
+  id              String              @id @default(cuid())
+  stationId       String
+  category        TransactionCategory
+  description     String
+  amountLkr       Decimal             @db.Decimal(14, 2)  // gross amount
+  vatAmountLkr    Decimal             @db.Decimal(14, 2)  @default(0)
+  netAmountLkr    Decimal             @db.Decimal(14, 2)  // amount excl. VAT
+  paymentMethod   PaymentMethod
+  transactionDate DateTime            @db.Date
+  reference       String?
+  fiscalYear      Int                 // e.g., 2024 (April - March in SL)
+  fiscalMonth     Int                 // 1-12 mapped to SL fiscal calendar
+  createdById     String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  station   Station @relation(fields: [stationId], references: [id])
+  createdBy User    @relation(fields: [createdById], references: [id])
+
+  // Back-relations for new business models
+  serviceJob       ServiceJob?
+  carWashJob       CarWashJob?
+  sparePartSale    SparePartSale?
+  sparePartStockIn SparePartStockIn?
+  cylinderSale     CylinderSale?
+  cylinderStockIn  CylinderStockIn?
+
+  @@index([stationId, transactionDate])
+  @@index([fiscalYear, fiscalMonth])
+  @@map("transactions")
+}
+
+// ─── Tax Models (Sri Lanka IRD) ───────────────────────────────────────────────
+
+model TaxRate {
+  id            String   @id @default(cuid())
+  taxType       TaxType
+  ratePercent   Decimal  @db.Decimal(6, 4)  // e.g., 18.0000 for VAT
+  effectiveFrom DateTime @db.Date
+  effectiveTo   DateTime? @db.Date
+  description   String?
+  createdAt     DateTime @default(now())
+
+  @@index([taxType, effectiveFrom])
+  @@map("tax_rates")
+}
+
+model TaxEntry {
+  id               String    @id @default(cuid())
+  stationId        String
+  taxType          TaxType
+  period           TaxPeriod
+  periodStart      DateTime  @db.Date
+  periodEnd        DateTime  @db.Date
+  grossAmountLkr   Decimal   @db.Decimal(14, 2)
+  taxableAmountLkr Decimal   @db.Decimal(14, 2)
+  taxRatePercent   Decimal   @db.Decimal(6, 4)
+  taxAmountLkr     Decimal   @db.Decimal(14, 2)
+  inputTaxLkr      Decimal   @db.Decimal(14, 2)  @default(0)  // VAT paid on purchases
+  netTaxPayableLkr Decimal   @db.Decimal(14, 2)  // taxAmountLkr - inputTaxLkr
+  isPaid           Boolean   @default(false)
+  paidAt           DateTime?
+  filingReference  String?   // IRD filing reference number
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  station Station @relation(fields: [stationId], references: [id])
+
+  @@index([stationId, taxType, periodStart])
+  @@map("tax_entries")
+}
+
+// ─── Reporting ────────────────────────────────────────────────────────────────
+
+model Report {
+  id          String     @id @default(cuid())
+  stationId   String?
+  type        ReportType
+  title       String
+  periodStart DateTime   @db.Date
+  periodEnd   DateTime   @db.Date
+  format      String     // PDF, EXCEL, JSON
+  filePath    String?    // stored file path
+  generatedAt DateTime   @default(now())
+
+  station Station? @relation(fields: [stationId], references: [id])
+
+  @@index([stationId, type])
+  @@map("reports")
+}
+
+// ─── Vehicle Services ─────────────────────────────────────────────────────────
+
+model ServiceJob {
+  id            String             @id @default(cuid())
+  stationId     String
+  vehicleNumber String
+  serviceType   VehicleServiceType
+  amountLkr     Decimal            @db.Decimal(14, 2)
+  paymentMethod PaymentMethod
+  serviceDate   DateTime           @db.Date
+  notes         String?
+  createdById   String
+  transactionId String?            @unique
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  station     Station      @relation(fields: [stationId], references: [id])
+  createdBy   User         @relation(fields: [createdById], references: [id])
+  transaction Transaction? @relation(fields: [transactionId], references: [id])
+
+  @@index([stationId, serviceDate])
+  @@map("service_jobs")
+}
+
+// ─── Car Wash ─────────────────────────────────────────────────────────────────
+
+model CarWashJob {
+  id            String        @id @default(cuid())
+  stationId     String
+  vehicleNumber String
+  washType      CarWashType
+  amountLkr     Decimal       @db.Decimal(14, 2)
+  paymentMethod PaymentMethod
+  washDate      DateTime      @db.Date
+  notes         String?
+  createdById   String
+  transactionId String?       @unique
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  station     Station      @relation(fields: [stationId], references: [id])
+  createdBy   User         @relation(fields: [createdById], references: [id])
+  transaction Transaction? @relation(fields: [transactionId], references: [id])
+
+  @@index([stationId, washDate])
+  @@map("car_wash_jobs")
+}
+
+// ─── Spare Parts ──────────────────────────────────────────────────────────────
+
+model SparePart {
+  id             String   @id @default(cuid())
+  stationId      String
+  sku            String
+  name           String
+  brand          String?
+  category       String?
+  unitPriceLkr   Decimal  @db.Decimal(14, 2)
+  costPriceLkr   Decimal  @db.Decimal(14, 2)
+  currentStock   Int      @default(0)
+  reorderLevel   Int      @default(5)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  station        Station              @relation(fields: [stationId], references: [id])
+  saleItems      SparePartSaleItem[]
+  stockIns       SparePartStockIn[]
+
+  @@unique([stationId, sku])
+  @@index([stationId])
+  @@map("spare_parts")
+}
+
+model SparePartSale {
+  id             String        @id @default(cuid())
+  stationId      String
+  totalAmountLkr Decimal       @db.Decimal(14, 2)
+  paymentMethod  PaymentMethod
+  saleDate       DateTime      @db.Date
+  notes          String?
+  createdById    String
+  transactionId  String?       @unique
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  station     Station             @relation(fields: [stationId], references: [id])
+  createdBy   User                @relation(fields: [createdById], references: [id])
+  transaction Transaction?        @relation(fields: [transactionId], references: [id])
+  items       SparePartSaleItem[]
+
+  @@index([stationId, saleDate])
+  @@map("spare_part_sales")
+}
+
+model SparePartSaleItem {
+  id           String  @id @default(cuid())
+  saleId       String
+  sparePartId  String
+  quantity     Int
+  unitPriceLkr Decimal @db.Decimal(14, 2)
+  totalLkr     Decimal @db.Decimal(14, 2)
+
+  sale      SparePartSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  sparePart SparePart     @relation(fields: [sparePartId], references: [id])
+
+  @@map("spare_part_sale_items")
+}
+
+model SparePartStockIn {
+  id            String   @id @default(cuid())
+  stationId     String
+  sparePartId   String
+  quantity      Int
+  costPriceLkr  Decimal  @db.Decimal(14, 2)
+  totalCostLkr  Decimal  @db.Decimal(14, 2)
+  receivedAt    DateTime
+  notes         String?
+  createdById   String
+  transactionId String?  @unique
+  createdAt     DateTime @default(now())
+
+  station     Station      @relation(fields: [stationId], references: [id])
+  sparePart   SparePart    @relation(fields: [sparePartId], references: [id])
+  createdBy   User         @relation(fields: [createdById], references: [id])
+  transaction Transaction? @relation(fields: [transactionId], references: [id])
+
+  @@index([stationId])
+  @@map("spare_part_stock_ins")
+}
+
+// ─── Gas Cylinders ────────────────────────────────────────────────────────────
+
+model GasCylinder {
+  id               String        @id @default(cuid())
+  stationId        String
+  brand            CylinderBrand
+  sizeKg           Decimal       @db.Decimal(6, 2)
+  sellingPriceLkr  Decimal       @db.Decimal(14, 2)
+  purchasePriceLkr Decimal       @db.Decimal(14, 2)
+  fullStock        Int           @default(0)
+  emptyStock       Int           @default(0)
+  reorderLevel     Int           @default(5)
+  isActive         Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  station   Station           @relation(fields: [stationId], references: [id])
+  sales     CylinderSale[]
+  stockIns  CylinderStockIn[]
+
+  @@unique([stationId, brand, sizeKg])
+  @@index([stationId])
+  @@map("gas_cylinders")
+}
+
+model CylinderSale {
+  id              String        @id @default(cuid())
+  stationId       String
+  gasCylinderId   String
+  isExchange      Boolean       @default(false)
+  quantity        Int
+  amountLkr       Decimal       @db.Decimal(14, 2)
+  paymentMethod   PaymentMethod
+  saleDate        DateTime      @db.Date
+  notes           String?
+  createdById     String
+  transactionId   String?       @unique
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  station      Station      @relation(fields: [stationId], references: [id])
+  gasCylinder  GasCylinder  @relation(fields: [gasCylinderId], references: [id])
+  createdBy    User         @relation(fields: [createdById], references: [id])
+  transaction  Transaction? @relation(fields: [transactionId], references: [id])
+
+  @@index([stationId, saleDate])
+  @@map("cylinder_sales")
+}
+
+model CylinderStockIn {
+  id               String      @id @default(cuid())
+  stationId        String
+  gasCylinderId    String
+  quantity         Int
+  purchasePriceLkr Decimal     @db.Decimal(14, 2)
+  totalCostLkr     Decimal     @db.Decimal(14, 2)
+  receivedAt       DateTime
+  notes            String?
+  createdById      String
+  transactionId    String?     @unique
+  createdAt        DateTime    @default(now())
+
+  station     Station      @relation(fields: [stationId], references: [id])
+  gasCylinder GasCylinder  @relation(fields: [gasCylinderId], references: [id])
+  createdBy   User         @relation(fields: [createdById], references: [id])
+  transaction Transaction? @relation(fields: [transactionId], references: [id])
+
+  @@index([stationId])
+  @@map("cylinder_stock_ins")
+}
+
+// ─── Audit Log ────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String   // e.g., "USER_LOGIN", "STOCK_UPDATE", "ORDER_APPROVED"
+  entityType String?  // e.g., "Tank", "PurchaseOrder"
+  entityId   String?
+  oldValues  Json?
+  newValues  Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

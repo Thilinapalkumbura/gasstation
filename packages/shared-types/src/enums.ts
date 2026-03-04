@@ -1,0 +1,119 @@
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  BACK_OFFICE = 'BACK_OFFICE',
+  STATION_MANAGER = 'STATION_MANAGER',
+  WORKER = 'WORKER',
+}
+
+export enum FuelType {
+  PETROL_92 = 'PETROL_92',
+  PETROL_95 = 'PETROL_95',
+  AUTO_DIESEL = 'AUTO_DIESEL',
+  SUPER_DIESEL = 'SUPER_DIESEL',
+  KEROSENE = 'KEROSENE',
+}
+
+export enum ShiftType {
+  MORNING = 'MORNING',   // 06:00 - 14:00
+  EVENING = 'EVENING',   // 14:00 - 22:00
+  NIGHT = 'NIGHT',       // 22:00 - 06:00
+}
+
+export enum UsageLogStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
+// Variance thresholds
+export const VARIANCE_WARNING_LITRES = 50;   // show warning badge
+export const VARIANCE_CRITICAL_LITRES = 200; // flag for review, block approval
+
+export enum StockMovementType {
+  DELIVERY_IN = 'DELIVERY_IN',
+  DISPENSED_OUT = 'DISPENSED_OUT',
+  ADJUSTMENT = 'ADJUSTMENT',
+  OPENING_STOCK = 'OPENING_STOCK',
+}
+
+export enum OrderStatus {
+  DRAFT = 'DRAFT',
+  SUBMITTED = 'SUBMITTED',
+  APPROVED = 'APPROVED',
+  PARTIALLY_DELIVERED = 'PARTIALLY_DELIVERED',
+  DELIVERED = 'DELIVERED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum TaxType {
+  VAT = 'VAT',             // Value Added Tax - 18%
+  INCOME_TAX = 'INCOME_TAX',
+  WHT = 'WHT',             // Withholding Tax
+  ESC = 'ESC',             // Economic Service Charge
+  PAYE = 'PAYE',           // Pay As You Earn
+}
+
+export enum TaxPeriod {
+  DAILY = 'DAILY',
+  WEEKLY = 'WEEKLY',
+  MONTHLY = 'MONTHLY',
+  QUARTERLY = 'QUARTERLY',
+  ANNUAL = 'ANNUAL',
+}
+
+export enum ReportType {
+  INCOME_STATEMENT = 'INCOME_STATEMENT',
+  BALANCE_SHEET = 'BALANCE_SHEET',
+  CASH_FLOW = 'CASH_FLOW',
+  STOCK_VALUATION = 'STOCK_VALUATION',
+  TAX_SUMMARY = 'TAX_SUMMARY',
+  VAT_RETURN = 'VAT_RETURN',
+}
+
+export enum TransactionCategory {
+  FUEL_SALE = 'FUEL_SALE',
+  FUEL_PURCHASE = 'FUEL_PURCHASE',
+  OPERATING_EXPENSE = 'OPERATING_EXPENSE',
+  SALARY = 'SALARY',
+  TAX_PAYMENT = 'TAX_PAYMENT',
+  OTHER_INCOME = 'OTHER_INCOME',
+  OTHER_EXPENSE = 'OTHER_EXPENSE',
+  VEHICLE_SERVICE_SALE = 'VEHICLE_SERVICE_SALE',
+  CAR_WASH_SALE = 'CAR_WASH_SALE',
+  SPARE_PARTS_SALE = 'SPARE_PARTS_SALE',
+  SPARE_PARTS_PURCHASE = 'SPARE_PARTS_PURCHASE',
+  GAS_CYLINDER_SALE = 'GAS_CYLINDER_SALE',
+  GAS_CYLINDER_PURCHASE = 'GAS_CYLINDER_PURCHASE',
+}
+
+export enum PaymentMethod {
+  CASH = 'CASH',
+  CREDIT = 'CREDIT',
+  CARD = 'CARD',
+  BANK_TRANSFER = 'BANK_TRANSFER',
+}
+
+export enum VehicleServiceType {
+  OIL_CHANGE = 'OIL_CHANGE',
+  TIRE_SERVICE = 'TIRE_SERVICE',
+  BATTERY_SERVICE = 'BATTERY_SERVICE',
+  BRAKE_SERVICE = 'BRAKE_SERVICE',
+  AC_SERVICE = 'AC_SERVICE',
+  ELECTRICAL = 'ELECTRICAL',
+  GENERAL_REPAIR = 'GENERAL_REPAIR',
+  OTHER = 'OTHER',
+}
+
+export enum CarWashType {
+  BASIC = 'BASIC',
+  STANDARD = 'STANDARD',
+  PREMIUM = 'PREMIUM',
+  INTERIOR = 'INTERIOR',
+  FULL_DETAIL = 'FULL_DETAIL',
+}
+
+export enum CylinderBrand {
+  LAUGFS = 'LAUGFS',
+  SHELL = 'SHELL',
+  OTHER = 'OTHER',
+}
