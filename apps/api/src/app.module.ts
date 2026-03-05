@@ -17,6 +17,7 @@ import { VehicleServicesModule } from './vehicle-services/vehicle-services.modul
 import { CarWashModule } from './car-wash/car-wash.module';
 import { SparePartsModule } from './spare-parts/spare-parts.module';
 import { GasCylindersModule } from './gas-cylinders/gas-cylinders.module';
+import { AlertsModule } from './alerts/alerts.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { GasCylindersModule } from './gas-cylinders/gas-cylinders.module';
     CarWashModule,
     SparePartsModule,
     GasCylindersModule,
+    AlertsModule,
   ],
 })
 export class AppModule {}

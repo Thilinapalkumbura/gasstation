@@ -116,6 +116,12 @@ enum CylinderBrand {
   OTHER
 }
 
+enum AlertType {
+  FUEL_TANK
+  SPARE_PART
+  GAS_CYLINDER
+}
+
 enum PaymentMethod {
   CASH
   CREDIT
@@ -160,6 +166,7 @@ model Station {
   gasCylinders   GasCylinder[]
   cylinderSales  CylinderSale[]
   cylinderStockIns CylinderStockIn[]
+  alertHistory     AlertHistory[]
 
   @@map("stations")
 }
@@ -726,4 +733,26 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ─── Alert History ─────────────────────────────────────────────────────────────
+
+model AlertHistory {
+  id           String    @id @default(cuid())
+  type         AlertType
+  stationId    String
+  entityId     String    // tankId, partId, or cylinderId
+  entityName   String    // e.g. "PETROL_95", "Oil Filter — Toyota", "LAUGFS 12.5kg"
+  currentStock Decimal   @db.Decimal(14, 2)
+  reorderLevel Decimal   @db.Decimal(14, 2)
+  isCritical   Boolean   @default(false)
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  station Station @relation(fields: [stationId], references: [id])
+
+  @@index([stationId, createdAt])
+  @@index([type, createdAt])
+  @@index([entityId])
+  @@map("alert_history")
 }

@@ -30,6 +30,7 @@ const BACKOFFICE_NAV: NavItem[] = [
   { href: '/backoffice/car-wash', label: 'Car Wash', icon: '🚿' },
   { href: '/backoffice/spare-parts', label: 'Spare Parts', icon: '🔩' },
   { href: '/backoffice/gas-cylinders', label: 'Gas Cylinders', icon: '🫙' },
+  { href: '/backoffice/alerts', label: 'Alert History', icon: '🔔' },
 ];
 
 const MANAGER_NAV: NavItem[] = [
@@ -39,6 +40,7 @@ const MANAGER_NAV: NavItem[] = [
   { href: '/manager/car-wash', label: 'Car Wash', icon: '🚿' },
   { href: '/manager/spare-parts', label: 'Spare Parts', icon: '🔩' },
   { href: '/manager/gas-cylinders', label: 'Gas Cylinders', icon: '🫙' },
+  { href: '/manager/alerts', label: 'Alert History', icon: '🔔' },
 ];
 
 const WORKER_NAV: NavItem[] = [
