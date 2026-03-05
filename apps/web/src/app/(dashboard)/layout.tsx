@@ -1,29 +1,46 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { NotificationBell } from '@/components/layout/NotificationBell';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Guard against Zustand SSR hydration mismatch — don't redirect until
+  // the store has been rehydrated from sessionStorage on the client.
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   // Close sidebar on route change
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname]);
 
+  // Close sidebar on Escape key
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') setSidebarOpen(false);
+  }, []);
+
   useEffect(() => {
-    if (!isAuthenticated) {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
+  useEffect(() => {
+    if (hydrated && !isAuthenticated) {
       router.replace('/login');
     }
-  }, [isAuthenticated]);
+  }, [hydrated, isAuthenticated]);
 
-  if (!isAuthenticated) {
+  if (!hydrated || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
@@ -51,10 +68,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           <span className="md:hidden font-bold text-gray-900 text-sm">⛽ GasStation</span>
 
-          {/* Push notification bell to the right */}
-          <div className="ml-auto">
-            <NotificationBell />
-          </div>
+          {/* Notification bell — only for non-worker roles */}
+          {user?.role !== 'WORKER' && (
+            <div className="ml-auto">
+              <NotificationBell />
+            </div>
+          )}
         </div>
 
         <main className="flex-1 overflow-y-auto">{children}</main>
