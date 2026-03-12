@@ -11,6 +11,7 @@ const USER_SELECT = {
   role: true,
   stationId: true,
   isActive: true,
+  workerType: true,
   createdAt: true,
   station: { select: { id: true, name: true, city: true } },
 };
@@ -30,9 +31,12 @@ export class UsersService {
     });
   }
 
-  async findAll(stationId?: string) {
+  async findAll(stationId?: string, role?: string) {
+    const where: any = {};
+    if (stationId) where.stationId = stationId;
+    if (role) where.role = role;
     return this.prisma.user.findMany({
-      where: stationId ? { stationId } : undefined,
+      where: Object.keys(where).length ? where : undefined,
       select: USER_SELECT,
       orderBy: { createdAt: 'desc' },
     });

@@ -28,6 +28,7 @@ export function createPrismaMock() {
     'goodsReceiptNote', 'grnItem', 'taxRate', 'taxEntry', 'transaction',
     'carWashJob', 'serviceJob', 'sparePart', 'sparePartSale', 'sparePartSaleItem',
     'sparePartStockIn', 'gasCylinder', 'cylinderSale', 'cylinderStockIn',
+    'workerChangeRequest',
   ];
 
   const mock: any = {

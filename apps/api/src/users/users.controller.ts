@@ -26,9 +26,9 @@ export class UsersController {
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.BACK_OFFICE)
-  @ApiOperation({ summary: 'List all users, optionally filter by station' })
-  findAll(@Query('stationId') stationId?: string) {
-    return this.usersService.findAll(stationId);
+  @ApiOperation({ summary: 'List all users, optionally filter by station or role' })
+  findAll(@Query('stationId') stationId?: string, @Query('role') role?: string) {
+    return this.usersService.findAll(stationId, role);
   }
 
   @Get(':id')

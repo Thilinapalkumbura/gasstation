@@ -23,6 +23,17 @@ enum UserRole {
   WORKER
 }
 
+enum WorkerType {
+  SHIFT
+  FULL_TIME
+}
+
+enum WorkerChangeRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum FuelType {
   PETROL_92
   PETROL_95
@@ -178,6 +189,7 @@ model User {
   fullName     String
   role         UserRole
   isActive     Boolean  @default(true)
+  workerType   WorkerType?
   stationId    String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -197,6 +209,9 @@ model User {
   sparePartStockIns    SparePartStockIn[]
   cylinderSales        CylinderSale[]
   cylinderStockIns     CylinderStockIn[]
+  submittedWorkerChanges WorkerChangeRequest[] @relation("RequestedBy")
+  reviewedWorkerChanges  WorkerChangeRequest[] @relation("ReviewedBy")
+  targetWorkerChanges    WorkerChangeRequest[] @relation("TargetWorker")
 
   @@index([email])
   @@index([stationId])
@@ -733,6 +748,34 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ─── Worker Change Requests ───────────────────────────────────────────────────
+
+model WorkerChangeRequest {
+  id              String                     @id @default(cuid())
+  workerId        String
+  requestedById   String
+  status          WorkerChangeRequestStatus  @default(PENDING)
+  // Proposed changes (null = no change to that field)
+  newWorkerType   WorkerType?
+  newFullName     String?
+  newStationId    String?
+  newIsActive     Boolean?
+  // Review
+  reviewedById    String?
+  reviewedAt      DateTime?
+  reviewerNotes   String?
+  createdAt       DateTime @default(now())
+
+  worker      User    @relation("TargetWorker",  fields: [workerId],      references: [id])
+  requestedBy User    @relation("RequestedBy",   fields: [requestedById], references: [id])
+  reviewedBy  User?   @relation("ReviewedBy",    fields: [reviewedById],  references: [id])
+
+  @@index([workerId])
+  @@index([requestedById])
+  @@index([status, createdAt])
+  @@map("worker_change_requests")
 }
 
 // ─── Alert History ─────────────────────────────────────────────────────────────

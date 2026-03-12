@@ -18,6 +18,7 @@ import { CarWashModule } from './car-wash/car-wash.module';
 import { SparePartsModule } from './spare-parts/spare-parts.module';
 import { GasCylindersModule } from './gas-cylinders/gas-cylinders.module';
 import { AlertsModule } from './alerts/alerts.module';
+import { WorkerChangesModule } from './worker-changes/worker-changes.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { AlertsModule } from './alerts/alerts.module';
     SparePartsModule,
     GasCylindersModule,
     AlertsModule,
+    WorkerChangesModule,
   ],
 })
 export class AppModule {}

@@ -31,6 +31,7 @@ const BACKOFFICE_NAV: NavItem[] = [
   { href: '/backoffice/spare-parts', label: 'Spare Parts', icon: '🔩' },
   { href: '/backoffice/gas-cylinders', label: 'Gas Cylinders', icon: '🫙' },
   { href: '/backoffice/alerts', label: 'Alert History', icon: '🔔' },
+  { href: '/backoffice/workers', label: 'Workers', icon: '👷' },
 ];
 
 const MANAGER_NAV: NavItem[] = [
@@ -41,6 +42,7 @@ const MANAGER_NAV: NavItem[] = [
   { href: '/manager/spare-parts', label: 'Spare Parts', icon: '🔩' },
   { href: '/manager/gas-cylinders', label: 'Gas Cylinders', icon: '🫙' },
   { href: '/manager/alerts', label: 'Alert History', icon: '🔔' },
+  { href: '/manager/workers', label: 'Worker Approvals', icon: '👷' },
 ];
 
 const WORKER_NAV: NavItem[] = [

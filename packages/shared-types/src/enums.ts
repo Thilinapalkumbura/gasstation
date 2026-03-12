@@ -117,3 +117,14 @@ export enum CylinderBrand {
   SHELL = 'SHELL',
   OTHER = 'OTHER',
 }
+
+export enum WorkerType {
+  SHIFT = 'SHIFT',
+  FULL_TIME = 'FULL_TIME',
+}
+
+export enum WorkerChangeRequestStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
